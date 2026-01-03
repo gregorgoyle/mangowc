@@ -2504,6 +2504,10 @@ void cleanuplisteners(void) {
 	wl_list_remove(&request_set_cursor_shape.link);
 	wl_list_remove(&request_start_drag.link);
 	wl_list_remove(&start_drag.link);
+	wl_list_remove(&touch_down.link);
+	wl_list_remove(&touch_frame.link);
+	wl_list_remove(&touch_motion.link);
+	wl_list_remove(&touch_up.link);
 	wl_list_remove(&new_session_lock.link);
 	wl_list_remove(&tearing_new_object.link);
 	wl_list_remove(&keyboard_shortcuts_inhibit_new_inhibitor.link);
@@ -3996,6 +4000,9 @@ void inputdevice(struct wl_listener *listener, void *data) {
 	case WLR_INPUT_DEVICE_SWITCH:
 		createswitch(wlr_switch_from_input_device(device));
 		break;
+	case WLR_INPUT_DEVICE_TOUCH:
+		createtouch(wlr_touch_from_input_device(device));
+		break;
 	default:
 		/* TODO handle other input device types */
 		break;
@@ -4009,6 +4016,8 @@ void inputdevice(struct wl_listener *listener, void *data) {
 	caps = WL_SEAT_CAPABILITY_POINTER;
 	if (!wl_list_empty(&kb_group->wlr_group->devices))
 		caps |= WL_SEAT_CAPABILITY_KEYBOARD;
+	if (!wl_list_empty(&touches))
+		caps |= WL_SEAT_CAPABILITY_TOUCH;
 	wlr_seat_set_capabilities(seat, caps);
 }
 
@@ -6024,6 +6033,14 @@ void setup(void) {
 	wl_signal_add(&cursor->events.tablet_tool_axis, &tablet_tool_axis);
 	wl_signal_add(&cursor->events.tablet_tool_button, &tablet_tool_button);
 	wl_signal_add(&cursor->events.tablet_tool_tip, &tablet_tool_tip);
+
+	wl_list_init(&touches);
+
+	wl_signal_add(&cursor->events.touch_down, &touch_down);
+	wl_signal_add(&cursor->events.touch_frame, &touch_frame);
+	wl_signal_add(&cursor->events.touch_motion, &touch_motion);
+	wl_signal_add(&cursor->events.touch_up, &touch_up);
+
 
 	// 这两句代码会造成obs窗口里的鼠标光标消失,不知道注释有什么影响
 	cursor_shape_mgr = wlr_cursor_shape_manager_v1_create(dpy, 1);
