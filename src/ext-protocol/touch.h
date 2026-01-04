@@ -57,12 +57,16 @@ touchdown(struct wl_listener *listener, void *data)
 
 	/* Find the client under the pointer and send the event along. */
 	xytonode(lx, ly, &surface, &c, NULL, &sx, &sy);
-	if (sloppyfocus)
+	if (sloppyfocus && c && c->scene->node.enabled && !client_is_unmanaged(c))
 		focusclient(c, 0);
-
 	if (surface != NULL) {
+		wlr_seat_touch_point_focus(seat, surface, event->time_msec, event->touch_id, sx, sy);
 		serial = wlr_seat_touch_notify_down(seat, surface, event->time_msec, event->touch_id, sx, sy);
 	}
+    else {
+		wlr_seat_touch_point_clear_focus(seat, event->time_msec, event->touch_id);
+        return;
+    }
 
 	if (serial && wlr_seat_touch_num_points(seat) == 1) {
 		/* Emulate a mouse click if the touch event wasn't handled */
@@ -126,16 +130,15 @@ touchmotion(struct wl_listener *listener, void *data)
 	wlr_cursor_absolute_to_layout_coords(cursor, &event->touch->base, event->x, event->y, &lx, &ly);
 	xytonode(lx, ly, &surface, &c, NULL, &sx, &sy);
 
-	if (c != NULL && surface != NULL) {
-		if (sloppyfocus)
-			focusclient(c, 0);
+        if (sloppyfocus && c && c->scene->node.enabled && !client_is_unmanaged(c))
+            focusclient(c, 0);
+    if(surface != NULL) {
 		wlr_seat_touch_point_focus(seat, surface, event->time_msec, event->touch_id, sx, sy);
-	} else {
-		if (sloppyfocus)
-			focusclient(NULL, 0);
+    }
+    else {
 		wlr_seat_touch_point_clear_focus(seat, event->time_msec, event->touch_id);
-	}
-	wlr_seat_touch_notify_motion(seat, event->time_msec, event->touch_id, sx, sy);
+    }
 
+	wlr_seat_touch_notify_motion(seat, event->time_msec, event->touch_id, sx, sy);
 	wlr_idle_notifier_v1_notify_activity(idle_notifier, seat);
 }
