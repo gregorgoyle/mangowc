@@ -57,7 +57,7 @@ void touchdown(struct wl_listener *listener, void *data) {
 
 	/* Find the client under the pointer and send the event along. */
 	xytonode(lx, ly, &surface, &c, NULL, &sx, &sy);
-	if (sloppyfocus && c && c->scene->node.enabled && !client_is_unmanaged(c))
+	if (config.sloppyfocus && c && c->scene->node.enabled && !client_is_unmanaged(c))
 		focusclient(c, 0);
 	if (surface != NULL) {
 		wlr_seat_touch_point_focus(seat, surface, event->time_msec,
@@ -130,7 +130,7 @@ void touchmotion(struct wl_listener *listener, void *data) {
 										 event->y, &lx, &ly);
 	xytonode(lx, ly, &surface, &c, NULL, &sx, &sy);
 
-	if (sloppyfocus && c && c->scene->node.enabled && !client_is_unmanaged(c))
+	if (config.sloppyfocus && c && c->scene->node.enabled && !client_is_unmanaged(c))
 		focusclient(c, 0);
 	if (surface != NULL) {
 		wlr_seat_touch_point_focus(seat, surface, event->time_msec,
